@@ -1,5 +1,7 @@
 node {
     checkout scm
+    def VOLUME = "$(pwd)/sources:/src"
+    def IMAGE = "cdrx/pyinstaller-linux:python2"
 
     stage('Build') {
         docker.image('python:2-alpine').inside {
@@ -37,11 +39,22 @@ node {
     }
 
     stage('Deploy') {
-        docker.image('cdrx/pyinstaller-linux:python2').inside {
-            def VOLUME = pwd() + '/sources:/src'
-            sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
-            archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals"
-            sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
+        agent any
+        environment {
+            VOLUME = VOLUME
+            IMAGE = IMAGE
+        }
+        steps {
+            dir(env.BUILD_ID) {
+                unstash(name: 'compiled-results')
+                sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
+            }
+        }
+        post {
+            success {
+                archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals"
+                sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
+            }
         }
     }
 }
