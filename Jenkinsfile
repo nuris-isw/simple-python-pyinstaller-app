@@ -49,8 +49,7 @@ node {
         if (currentBuild.result == 'SUCCESS') {
             archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals"
             sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
-            echo "Deployment succeeded. Waiting for 1 minute..."
-            sleep 1m
+            sh './jenkins/script/kill.sh'
         }
     }
 }
