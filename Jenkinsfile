@@ -30,6 +30,28 @@ pipeline {
                 }
             }
         }
+        stage('Manual Approval') {
+            steps {
+                script {
+                    // Menampilkan pesan untuk persetujuan manual
+                    def approval = input(
+                        id: 'manual-approval',
+                        message: 'Apakah Anda ingin melanjutkan ke tahap Deploy?',
+                        ok: 'Ya',
+                        submitter: 'dicoding, nuris-isw', // Daftar pengguna yang dapat memberikan persetujuan, pisahkan dengan koma
+                        parameters: [
+                            string(defaultValue: 'Ya', description: 'Persetujuan', name: 'approvalParam')
+                        ]
+                    )
+                    // Memeriksa apakah persetujuan diberikan
+                    if (approval == 'Ya') {
+                        echo 'Melanjutkan ke tahap Deploy...'
+                    } else {
+                        error('Persetujuan ditolak. Proses dihentikan.')
+                    }
+                }
+            }
+        }
         stage('Deploy') { 
             agent any
             environment { 
