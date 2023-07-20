@@ -32,7 +32,27 @@ pipeline {
                 }
             }
         }
-        stage('Deliver') { 
+        stage('Manual Approval') {
+            steps {
+                script {
+                    def approval = input(
+                        id: 'manual-approval',
+                        message: 'Apakah Anda ingin melanjutkan ke tahap Deploy?',
+                        ok: 'Ya',
+                        submitter: 'dicoding, nuris_isw', 
+                        parameters: [
+                            string(defaultValue: 'Ya', description: 'Persetujuan', name: 'approvalParam')
+                        ]
+                    )
+                    if (approval == 'Ya') {
+                        echo 'Melanjutkan ke tahap Deploy...'
+                    } else {
+                        error('Persetujuan ditolak. Proses dihentikan.')
+                    }
+                }
+            }
+        }
+        stage('Deploy') { 
             agent any
             environment { 
                 VOLUME = '$(pwd)/sources:/src'
