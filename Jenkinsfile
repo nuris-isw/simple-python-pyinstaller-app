@@ -35,23 +35,23 @@ node {
     }
 
     stage('Deploy') {
-        environment {
-            VOLUME = '$(pwd)/sources:/src'
-            IMAGE = 'cdrx/pyinstaller-linux:python2'
+        def VOLUME = "${pwd()}/sources:/src"
+        def IMAGE = "cdrx/pyinstaller-linux:python2"
+
+        // Define the environment variables
+        env.VOLUME = VOLUME
+        env.IMAGE = IMAGE
+
+        // Start the Docker container to build the project
+        dir("${env.BUILD_ID}") {
+            unstash('compiled-results')
+            sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
         }
-        steps {
-            dir('${env.BUILD_ID}') {
-                unstash(name: 'compiled-results')
-                sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
-            }
-        }
-        post {
-            success {
-                dir('${env.BUILD_ID}') {
-                    archiveArtifacts '${env.BUILD_ID}/sources/dist/add2vals'
-                    sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
-                }
-            }
+
+        // Post-build actions
+        if (currentBuild.result == 'SUCCESS') {
+            archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals"
+            sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
         }
     }
 }
