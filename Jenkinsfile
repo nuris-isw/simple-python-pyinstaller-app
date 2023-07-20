@@ -1,7 +1,7 @@
 node {
     checkout scm
-    def VOLUME = "$(pwd)/sources:/src"
-    def IMAGE = "cdrx/pyinstaller-linux:python2"
+    def VOLUME ='$(pwd)/sources:/src'
+    def IMAGE = 'cdrx/pyinstaller-linux:python2'
 
     stage('Build') {
         docker.image('python:2-alpine').inside {
