@@ -32,10 +32,6 @@ pipeline {
         }
         stage('Deploy') { 
             agent any
-            input {
-                message "Apakah Anda yakin ingin melanjutkan ke tahap Deploy?"
-                ok "Lanjutkan"
-            }
             environment { 
                 VOLUME = '$(pwd)/sources:/src'
                 IMAGE = 'cdrx/pyinstaller-linux:python2'
@@ -48,6 +44,7 @@ pipeline {
             }
             post {
                 success {
+                    sh "sleep 1m"
                     archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals" 
                     sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
                 }
