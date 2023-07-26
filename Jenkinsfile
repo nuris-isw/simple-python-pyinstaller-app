@@ -1,4 +1,7 @@
 node {
+    def VOLUME = "$(pwd)/sources:/src"
+    def IMAGE = "cdrx/pyinstaller-linux:python2"
+
     stage('Build') {
         docker.image('python:2-alpine').inside {
             sh 'python -m py_compile sources/add2vals.py sources/calc.py'
@@ -21,23 +24,21 @@ node {
     }
 
     stage('Deploy') {
-        withEnv([
-            VOLUME='$(pwd)/sources:/src',
-            IMAGE='cdrx/pyinstaller-linux:python2'
-        ]) {
-            dir(env.BUILD_ID) {
-                unstash 'compiled-results'
-                sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
-                
-                try {
-                    sleep(60)
-                    archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals"
-                    sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
-                } catch (Exception e) {
-                    echo "Failed to deploy: ${e.getMessage()}"
-                    currentBuild.result = 'FAILURE'
-                }
-            }
+        // Set the environment variables within the stage
+        env.VOLUME = VOLUME
+        env.IMAGE = IMAGE
+
+        // Deploy
+        dir(env.BUILD_ID) {
+            unstash 'compiled-results'
+            sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
+        }
+
+        // Post-Deploy (using catchError to handle errors)
+        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+            sleep(60)
+            archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals"
+            sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
         }
     }
 
