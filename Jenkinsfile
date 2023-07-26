@@ -34,15 +34,14 @@ node {
 
         stage('Deploy') {
             node {
-                withEnv(["VOLUME='${pwd()}/sources:/src'", "IMAGE='cdrx/pyinstaller-linux:python2'"]) {
-                    dir(env.BUILD_ID) {
-                        unstash('compiled-results')
-                        sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
-                    }
-                    sleep 1 // Memberikan jeda selama 1 menit
-                    archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals"
-                    sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
+                withEnv(["VOLUME=${pwd()}/sources:/src", "IMAGE=cdrx/pyinstaller-linux:python2"]) {
+                dir(env.BUILD_ID) {
+                    unstash('compiled-results')
+                    sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
                 }
+                sleep 1 // Memberikan jeda selama 1 menit
+                archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals"
+                sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
             }
         }
     } catch (err) {
