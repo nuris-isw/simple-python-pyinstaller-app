@@ -1,6 +1,4 @@
 node {
-    checkout scm
-
     stage('Build') {
         docker.image('python:2-alpine').inside {
             sh 'python -m py_compile sources/add2vals.py sources/calc.py'
@@ -37,15 +35,21 @@ node {
     }
 
     stage('Deploy') {
-        docker.image('cdrx/pyinstaller-linux:python2').inside {
-            withEnv(["VOLUME=$(pwd)/sources:/src"]) {
-                dir("${env.BUILD_ID}") {
-                    unstash(name: 'compiled-results')
-                    sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
-                }
-            }
+        def VOLUME = "${pwd()}/sources:/src"
+        def IMAGE = "cdrx/pyinstaller-linux:python2"
+
+        env.VOLUME = VOLUME
+        env.IMAGE = IMAGE
+
+        dir("${env.BUILD_ID}") {
+            unstash('compiled-results')
+            sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F add2vals.py'"
+        }
+
+        if (currentBuild.result == 'SUCCESS') {
             archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals"
             sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
+            sh "./jenkins/script/kill.sh"
         }
     }
 }
