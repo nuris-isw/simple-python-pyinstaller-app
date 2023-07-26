@@ -1,5 +1,5 @@
 node {
-    def VOLUME = "$(pwd)/sources:/src"
+    def VOLUME = "${pwd()}/sources:/src"
     def IMAGE = "cdrx/pyinstaller-linux:python2"
 
     stage('Build') {
