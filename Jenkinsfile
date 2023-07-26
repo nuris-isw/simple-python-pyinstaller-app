@@ -37,7 +37,7 @@ node {
         // Post-Deploy (using catchError to handle errors)
         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
             sleep(60)
-            archiveArtifacts "${env.BUILD_ID}/sources/dist/add2vals"
+            archiveArtifacts "sources/dist/add2vals"
             sh "docker run --rm -v ${VOLUME} ${IMAGE} 'rm -rf build dist'"
         }
     }
